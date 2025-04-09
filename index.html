@@ -160,6 +160,7 @@
             justify-content: space-between;
             margin-top: 20px;
             color: #666;
+            flex-wrap: wrap;
         }
         .count-item {
             display: flex;
@@ -192,6 +193,51 @@
         .tooltip:hover .tooltiptext {
             visibility: visible;
             opacity: 1;
+        }
+
+        /* Media queries para responsividade em smartphones */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 1.6rem;
+                margin-bottom: 20px;
+            }
+            .container {
+                padding: 15px;
+            }
+            .input-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .input-section input[type="text"] {
+                width: 100%;
+            }
+            .toggle-container {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+            button {
+                width: 100%;
+                padding: 12px;
+                margin-top: 5px;
+            }
+            .counts-section {
+                flex-direction: column;
+                gap: 5px;
+            }
+            .teams-container {
+                flex-direction: column;
+            }
+            .team {
+                min-width: unset;
+                width: 100%;
+                margin-bottom: 15px;
+            }
+            .player-item {
+                padding: 10px 5px;
+            }
         }
     </style>
 </head>
@@ -267,6 +313,43 @@
         // Lista de jogadores
         let players = [];
         
+        // Constante para o localStorage
+        const STORAGE_KEY = 'volleyballPlayers';
+        
+        // Salvar jogadores no localStorage
+        function savePlayers() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+                localStorage.setItem('balanceGenders', balanceToggle.checked);
+                localStorage.setItem('playersPerTeam', playersPerTeamSelect.value);
+            } catch (error) {
+                console.error('Erro ao salvar jogadores:', error);
+            }
+        }
+        
+        // Carregar jogadores do localStorage
+        function loadPlayers() {
+            try {
+                const savedPlayers = localStorage.getItem(STORAGE_KEY);
+                if (savedPlayers) {
+                    players = JSON.parse(savedPlayers);
+                    updatePlayerList();
+                }
+                
+                const savedBalance = localStorage.getItem('balanceGenders');
+                if (savedBalance !== null) {
+                    balanceToggle.checked = savedBalance === 'true';
+                }
+                
+                const savedPlayersPerTeam = localStorage.getItem('playersPerTeam');
+                if (savedPlayersPerTeam) {
+                    playersPerTeamSelect.value = savedPlayersPerTeam;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar jogadores:', error);
+            }
+        }
+        
         // Adicionar jogador
         function addPlayer() {
             const name = playerNameInput.value.trim();
@@ -280,6 +363,8 @@
             });
             
             updatePlayerList();
+            savePlayers(); // Salvar após adicionar
+            
             playerNameInput.value = '';
             playerNameInput.focus();
         }
@@ -288,6 +373,7 @@
         function removePlayer(index) {
             players.splice(index, 1);
             updatePlayerList();
+            savePlayers(); // Salvar após remover
         }
         
         // Atualizar lista de jogadores
@@ -338,8 +424,18 @@
                 return;
             }
             
+            // Esconde o teclado virtual em dispositivos móveis
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+            
             const playersPerTeam = parseInt(playersPerTeamSelect.value);
             const balanceGenders = balanceToggle.checked;
+            
+            // Salvar preferências
+            localStorage.setItem('balanceGenders', balanceGenders);
+            localStorage.setItem('playersPerTeam', playersPerTeam);
+            
             const teamCount = Math.ceil(players.length / playersPerTeam);
             
             // Criar times
@@ -466,6 +562,18 @@
         playerNameInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') addPlayer();
         });
+        
+        // Escutar mudanças nas configurações
+        balanceToggle.addEventListener('change', () => {
+            localStorage.setItem('balanceGenders', balanceToggle.checked);
+        });
+        
+        playersPerTeamSelect.addEventListener('change', () => {
+            localStorage.setItem('playersPerTeam', playersPerTeamSelect.value);
+        });
+        
+        // Carregar jogadores ao iniciar a página
+        document.addEventListener('DOMContentLoaded', loadPlayers);
     </script>
 </body>
 </html>
